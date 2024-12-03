@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>버스 시간표</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .bus-info {
+            font-size: 2.5em; /* 숫자를 크게 표시 */
+            font-weight: bold; /* 굵게 표시 */
+            margin: 20px 0;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>오는 버스 시간</h1>
+    <div class="bus-info" id="bus-info"></div>
+    <h2>대기 중인 버스 시간표</h2>
+    <table id="waiting-table"></table>
+
+    <script>
+        const busSchedule = [
+            ["차량번호", "출발시간"],
+            ["380", "06:20"],
+            ["185", "06:45"],
+            ["181", "06:55"],
+            ["380-3", "07:08"],
+            ["303", "07:15"],
+            ["91", "07:20"],
+            ["303-1", "07:25"],
+            ["185", "07:27"],
+            ["181", "07:35"],
+            ["380", "07:50"],
+            // ... (여기에 나머지 버스 시간 추가)
+            ["185", "23:55"],
+            ["181", "23:55"]
+        ];
+
+        function getNextBuses() {
+            const now = new Date();
+            const currentTime = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const upcomingBuses = [];
+
+            busSchedule.slice(1).forEach(bus => {
+                const [busNumber, departureTime] = bus;
+                const [hours, minutes] = departureTime.split(':').map(Number);
+                const busTimeInSeconds = hours * 3600 + minutes * 60;
+
+                if (busTimeInSeconds > currentTime) {
+                    upcomingBuses.push({ busNumber, departureTime });
+                }
+            });
+
+            // 가장 빠른 3대의 버스 정렬
+            upcomingBuses.sort((a, b) => {
+                const [hoursA, minutesA] = a.departureTime.split(':').map(Number);
+                const [hoursB, minutesB] = b.departureTime.split(':').map(Number);
+                return hoursA * 60 + minutesA - (hoursB * 60 + minutesB);
+            });
+            return upcomingBuses.slice(0, 3);
+        }
+
+        function displayBuses() {
+            const upcomingBuses = getNextBuses();
+            const busInfoDiv = document.getElementById('bus-info');
+            busInfoDiv.innerHTML = `<h2>다음 3대의 버스</h2>${upcomingBuses.map(bus => `<div>${bus.departureTime} - ${bus.busNumber}</div>`).join('')}`;
+        }
+
+        function displayWaitingBuses() {
+            const waitingTable = document.getElementById('waiting-table');
+            const now = new Date();
+            const currentTime = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const waitingBuses = busSchedule.slice(1).filter(bus => {
+                const [busNumber, departureTime] = bus;
+                const [hours, minutes] = departureTime.split(':').map(Number);
+                const busTimeInSeconds = hours * 3600 + minutes * 60;
+
+                return busTimeInSeconds > currentTime;
+            });
+
+            waitingBuses.sort((a, b) => {
+                const [hoursA, minutesA] = a[1].split(':').map(Number);
+                const [hoursB, minutesB] = b[1].split(':').map(Number);
+                return hoursA * 60 + minutesA - (hoursB * 60 + minutesB);
+            });
+
+            // 대기 중인 버스 10대만 표시
+            const topWaitingBuses = waitingBuses.slice(0, 10);
+            topWaitingBuses.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                waitingTable.appendChild(tr);
+            });
+        }
+
+        displayBuses();
+        displayWaitingBuses();
+    </script>
+</body>
+</html>
